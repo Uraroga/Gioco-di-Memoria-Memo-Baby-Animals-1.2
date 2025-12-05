@@ -1,0 +1,840 @@
+
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gioco di Memoria</title>
+    <style>
+        /* Stili Generali */
+        :root {
+            --bg-color: #f0f8ff;
+            --board-bg: #e6f2ff;
+            --card-bg: #4a90e2;
+            --card-front-bg: #ffffff;
+            --player1-color: #f5a623;
+            --player2-color: #7ed321;
+            --text-color: #333;
+            --border-radius: 12px;
+            --shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            --paypal-blue: #0070ba;
+        }
+
+        *, *::before, *::after {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Helvetica Neue', Arial, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            min-height: 100vh;
+            padding: 20px;
+            overflow-x: hidden;
+        }
+
+        /* Contenitore Principale */
+        .main-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            width: 100%;
+            max-width: 1200px;
+        }
+
+        /* Controlli di Gioco */
+        .controls {
+            background-color: white;
+            padding: 15px 25px;
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow);
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .controls label {
+            font-weight: bold;
+        }
+
+        .controls select, .controls button {
+            padding: 10px 15px;
+            border-radius: 8px;
+            border: 1px solid #ccc;
+            font-size: 16px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        
+        .controls select:focus, .controls button:focus {
+            outline: 2px solid var(--card-bg);
+            outline-offset: 2px;
+        }
+
+        #restart-btn {
+            background-color: var(--card-bg);
+            color: white;
+            border: none;
+            font-weight: bold;
+        }
+
+        #restart-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+        }
+
+        /* Pulsante PayPal */
+        .paypal-btn {
+            background-color: var(--paypal-blue);
+            color: white;
+            text-decoration: none;
+            padding: 10px 15px;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: bold;
+            display: inline-flex;
+            align-items: center;
+            border: none;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            transition: all 0.2s ease;
+        }
+
+        .paypal-btn:hover {
+            background-color: #005ea6;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        }
+
+        /* Layout Principale del Gioco */
+        .game-layout {
+            display: flex;
+            width: 100%;
+            gap: 20px;
+            align-items: flex-start;
+        }
+
+        /* Informazioni sui Giocatori */
+        .players-info {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            flex-basis: 250px;
+            flex-shrink: 0;
+        }
+
+        .player {
+            background-color: white;
+            padding: 20px;
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow);
+            transition: all 0.3s ease-in-out;
+            border: 4px solid transparent;
+        }
+        
+        .player.active {
+            transform: scale(1.05);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+        }
+
+        .player#player1.active {
+            border-color: var(--player1-color);
+        }
+
+        .player#player2.active {
+            border-color: var(--player2-color);
+        }
+
+        .player h2 {
+            margin-bottom: 10px;
+            border-bottom: 2px solid #eee;
+            padding-bottom: 10px;
+        }
+
+        .score {
+            font-size: 18px;
+            font-weight: bold;
+            margin-bottom: 15px;
+        }
+
+        .collected-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(40px, 1fr));
+            gap: 5px;
+            min-height: 50px;
+        }
+
+        .collected-card {
+            width: 40px;
+            height: 40px;
+            border-radius: 6px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background-color: var(--card-front-bg);
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            font-size: 20px;
+        }
+        
+        .collected-card img {
+            max-width: 90%;
+            max-height: 90%;
+            border-radius: 4px;
+        }
+
+        /* Tabellone di Gioco */
+        #game-board {
+            display: grid;
+            gap: 15px;
+            flex-grow: 1;
+            background-color: var(--board-bg);
+            padding: 20px;
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow);
+        }
+
+        /* Stili dinamici per la griglia del tabellone */
+        #game-board.cols-2 { grid-template-columns: repeat(2, 1fr); }
+        #game-board.cols-3 { grid-template-columns: repeat(3, 1fr); }
+        #game-board.cols-4 { grid-template-columns: repeat(4, 1fr); }
+        #game-board.cols-5 { grid-template-columns: repeat(5, 1fr); }
+        #game-board.cols-6 { grid-template-columns: repeat(6, 1fr); }
+
+        /* Carte */
+        .card {
+            aspect-ratio: 1 / 1;
+            perspective: 1000px;
+            background-color: transparent;
+            cursor: pointer;
+            border: none;
+        }
+
+        .card-inner {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            transition: transform 0.6s;
+            transform-style: preserve-3d;
+            border-radius: var(--border-radius);
+        }
+
+        .card.is-flipped .card-inner {
+            transform: rotateY(180deg);
+        }
+
+        .card-face {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            -webkit-backface-visibility: hidden;
+            backface-visibility: hidden;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            border-radius: var(--border-radius);
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            font-size: clamp(24px, 5vw, 48px);
+        }
+
+        .card-face--back {
+            background-color: var(--card-bg);
+            color: white;
+            background-image: linear-gradient(45deg, rgba(255,255,255,0.1) 25%, transparent 25%, transparent 50%, rgba(255,255,255,0.1) 50%, rgba(255,255,255,0.1) 75%, transparent 75%, transparent);
+            background-size: 30px 30px;
+        }
+        
+        .card-face--back::before {
+            content: '?';
+            font-weight: bold;
+        }
+        
+        .card.is-flipped .card-face--back::before {
+            content: '';
+        }
+
+        .card-face--front {
+            background-color: var(--card-front-bg);
+            transform: rotateY(180deg);
+        }
+        
+        .card-face--front img {
+            max-width: 90%;
+            max-height: 90%;
+            border-radius: 8px;
+        }
+
+        .card.is-matched {
+            visibility: hidden;
+            opacity: 0;
+            transition: visibility 0s 0.5s, opacity 0.5s;
+        }
+
+        /* Modale di Fine Partita */
+        #game-over-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.6);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.3s, visibility 0.3s;
+            z-index: 1000;
+        }
+
+        #game-over-modal.show {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .modal-content {
+            background-color: white;
+            padding: 40px;
+            border-radius: var(--border-radius);
+            text-align: center;
+            transform: scale(0.9);
+            transition: transform 0.3s;
+        }
+        
+        #game-over-modal.show .modal-content {
+            transform: scale(1);
+        }
+
+        .modal-content h2 {
+            margin-bottom: 20px;
+            font-size: 2em;
+        }
+
+        .modal-content p {
+            margin-bottom: 30px;
+            font-size: 1.2em;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 900px) {
+            .game-layout {
+                flex-direction: column;
+                align-items: center;
+            }
+            .players-info {
+                flex-direction: row;
+                width: 100%;
+                justify-content: center;
+                gap: 15px;
+                flex-basis: auto;
+            }
+            .player {
+                width: 45%;
+                max-width: 300px;
+            }
+            #game-board {
+                width: 100%;
+            }
+        }
+
+        @media (max-width: 600px) {
+            body {
+                padding: 10px;
+            }
+            /* Header più compatto */
+            .controls {
+                flex-direction: row;
+                flex-wrap: wrap;
+                gap: 8px;
+                padding: 10px;
+                justify-content: space-between;
+            }
+            .controls label {
+                display: none; /* Nascondi label per risparmiare spazio */
+            }
+            .controls select {
+                font-size: 14px;
+                padding: 6px;
+                flex-grow: 1;
+            }
+            #restart-btn {
+                font-size: 14px;
+                padding: 6px 10px;
+            }
+            .paypal-btn {
+                font-size: 14px;
+                padding: 6px 10px;
+            }
+
+            /* Pannelli Giocatori Super Compatti */
+            .players-info {
+                flex-direction: row;
+                gap: 8px;
+                margin-bottom: 10px;
+            }
+            .player {
+                width: 50%;
+                max-width: none;
+                padding: 8px; /* Padding minimo */
+                display: flex;
+                flex-direction: column;
+                justify-content: flex-start;
+                border-width: 2px; /* Bordo meno spesso */
+            }
+            .player.active {
+                transform: none; /* Rimuovi scale effect su mobile */
+                box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+            }
+            .player h2 {
+                font-size: 13px;
+                margin-bottom: 4px;
+                padding-bottom: 4px;
+                white-space: nowrap;
+                overflow: hidden;
+                text-overflow: ellipsis;
+            }
+            .score {
+                font-size: 13px;
+                margin-bottom: 6px;
+            }
+            
+            /* Griglia icone collezionate molto più piccola */
+            .collected-cards {
+                grid-template-columns: repeat(auto-fill, minmax(20px, 1fr));
+                gap: 2px;
+                min-height: 25px;
+            }
+            .collected-card {
+                width: 20px;
+                height: 20px;
+                font-size: 12px;
+                border-radius: 3px;
+            }
+
+            #game-board {
+                gap: 8px;
+                padding: 10px;
+            }
+            .card-face {
+                font-size: clamp(20px, 8vw, 36px);
+            }
+        }
+
+    </style>
+</head>
+<body>
+
+    <div class="main-container">
+        <header class="controls">
+            <label for="pairs-selector">Coppie:</label>
+            <select id="pairs-selector">
+                <option value="4">4 coppie</option>
+                <option value="6">6 coppie</option>
+                <option value="8" selected>8 coppie</option>
+                <option value="9">9 coppie</option>
+                <option value="10">10 coppie</option>
+            </select>
+            <button id="restart-btn">Ricomincia</button>
+            <a href="https://paypal.me/uraroga" target="_blank" class="paypal-btn" title="Supporta con PayPal">PayPal</a>
+        </header>
+
+        <div class="game-layout">
+            <aside class="players-info">
+                <div id="player1" class="player">
+                    <h2>Giocatore 1</h2>
+                    <p class="score">Punti: <span id="score1">0</span></p>
+                    <div class="collected-cards" id="collected1"></div>
+                </div>
+                <div id="player2" class="player">
+                    <h2>Giocatore 2</h2>
+                    <p class="score">Punti: <span id="score2">0</span></p>
+                    <div class="collected-cards" id="collected2"></div>
+                </div>
+            </aside>
+            <main id="game-board"></main>
+        </div>
+    </div>
+
+    <div id="game-over-modal">
+        <div class="modal-content">
+            <h2 id="winner-message"></h2>
+            <p id="final-scores"></p>
+            <button id="restart-modal-btn">Gioca ancora</button>
+        </div>
+    </div>
+
+
+    <script>
+        /********************************************************************************
+         * CONFIGURAZIONE DEL GIOCO
+         * 
+         * Puoi personalizzare il gioco modificando le costanti qui sotto.
+        /********************************************************************************/
+
+        // Elenco delle immagini predefinite (emoji).
+        // Il numero di emoji deve essere almeno pari al numero massimo di coppie (10).
+        const DEFAULT_EMOJIS = ["🐶", "🐱", "🐭", "🐹", "🐰", "🦊", "🐻", "🐼", "🐨", "🐯"];
+
+        /**
+         * Per usare immagini personalizzate da URL, modifica l'oggetto CONFIG.
+         * 
+         * 1. Cambia `imagesMode` da "emoji" a "urls".
+         * 2. Popola l'array `images` con i link alle tue immagini.
+         *    L'array deve contenere un numero di URL pari al numero di coppie che vuoi usare.
+         *    Esempio per 4 coppie:
+         *    
+         *    const CONFIG = {
+         *        imagesMode: "urls",
+         *        images: [
+         *            "https://picsum.photos/id/237/100", // Cane
+         *            "https://picsum.photos/id/1025/100", // Altro cane
+         *            "https://picsum.photos/id/1074/100", // Leone
+         *            "https://picsum.photos/id/1084/100"  // Volpe
+         *        ]
+         *    };
+         */
+        const CONFIG = {
+            imagesMode: "emoji", // "emoji" o "urls"
+            images: []
+        };
+        
+        /**
+         * Funzione per impostare programmaticamente le immagini da usare.
+         * @param {string[]} imagesArray - Un array di URL di immagini.
+         */
+        function setImages(imagesArray) {
+            if (Array.isArray(imagesArray) && imagesArray.length > 0) {
+                CONFIG.imagesMode = "urls";
+                CONFIG.images = imagesArray;
+                console.log("Modalità immagini impostata su 'urls' con", imagesArray.length, "immagini.");
+            } else {
+                CONFIG.imagesMode = "emoji";
+                console.log("Array di immagini non valido. Ripristinata modalità 'emoji'.");
+            }
+            // Riavvia il gioco per applicare le modifiche
+            initGame();
+        }
+
+        /********************************************************************************
+         * ELEMENTI DEL DOM
+        /********************************************************************************/
+        const gameBoard = document.getElementById('game-board');
+        const pairsSelector = document.getElementById('pairs-selector');
+        const restartBtn = document.getElementById('restart-btn');
+        const restartModalBtn = document.getElementById('restart-modal-btn');
+        const score1El = document.getElementById('score1');
+        const score2El = document.getElementById('score2');
+        const player1Panel = document.getElementById('player1');
+        const player2Panel = document.getElementById('player2');
+        const collected1El = document.getElementById('collected1');
+        const collected2El = document.getElementById('collected2');
+        const gameOverModal = document.getElementById('game-over-modal');
+        const winnerMessageEl = document.getElementById('winner-message');
+        const finalScoresEl = document.getElementById('final-scores');
+
+        /********************************************************************************
+         * STATO DEL GIOCO
+        /********************************************************************************/
+        let state = {
+            currentPlayer: 1,
+            score: { 1: 0, 2: 0 },
+            flippedCards: [],
+            isLocked: false, // Blocca il tabellone durante il controllo delle carte
+            pairsFound: 0,
+            totalPairs: 8,
+        };
+
+        /**
+         * Inizializza o resetta il gioco.
+         */
+        function initGame() {
+            // Resetta lo stato
+            state.currentPlayer = 1;
+            state.score = { 1: 0, 2: 0 };
+            state.flippedCards = [];
+            state.isLocked = false;
+            state.totalPairs = parseInt(pairsSelector.value, 10);
+            state.pairsFound = 0;
+            
+            // Aggiorna UI
+            updateScores();
+            updateTurnIndicator();
+            collected1El.innerHTML = '';
+            collected2El.innerHTML = '';
+            gameOverModal.classList.remove('show');
+            
+            // Crea e visualizza il nuovo mazzo
+            const deck = createDeck();
+            shuffle(deck);
+            renderBoard(deck);
+        }
+
+        /**
+         * Crea il mazzo di carte basandosi sulla configurazione.
+         * @returns {Array<string>} Un array di valori per le carte.
+         */
+        function createDeck() {
+            let items;
+            if (CONFIG.imagesMode === 'urls' && CONFIG.images.length >= state.totalPairs) {
+                items = CONFIG.images.slice(0, state.totalPairs);
+            } else {
+                items = DEFAULT_EMOJIS.slice(0, state.totalPairs);
+            }
+            // Duplica gli elementi per creare le coppie
+            return [...items, ...items];
+        }
+
+        /**
+         * Mescola un array usando l'algoritmo di Fisher-Yates.
+         * @param {Array} array - L'array da mescolare.
+         */
+        function shuffle(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+        }
+        
+        /**
+         * Imposta il numero di colonne della griglia in base al numero di carte.
+         */
+        function setBoardGrid() {
+            const numCards = state.totalPairs * 2;
+            let cols = 4; // Default
+            if (numCards <= 8) cols = 4;
+            else if (numCards <= 12) cols = 4;
+            else if (numCards <= 16) cols = 4;
+            else if (numCards <= 18) cols = 6;
+            else if (numCards <= 20) cols = 5;
+
+            gameBoard.className = ''; // Rimuove classi precedenti
+            gameBoard.classList.add(`cols-${cols}`);
+        }
+
+        /**
+         * Renderizza il tabellone di gioco.
+         * @param {Array<string>} deck - Il mazzo di carte mescolato.
+         */
+        function renderBoard(deck) {
+            gameBoard.innerHTML = '';
+            setBoardGrid();
+
+            deck.forEach(item => {
+                const card = document.createElement('button');
+                card.className = 'card';
+                card.dataset.value = item;
+                card.setAttribute('aria-label', 'Carta coperta');
+
+                const cardInner = document.createElement('div');
+                cardInner.className = 'card-inner';
+
+                const cardBack = document.createElement('div');
+                cardBack.className = 'card-face card-face--back';
+
+                const cardFront = document.createElement('div');
+                cardFront.className = 'card-face card-face--front';
+
+                if (CONFIG.imagesMode === 'urls') {
+                    const img = document.createElement('img');
+                    img.src = item;
+                    img.alt = 'Immagine della carta';
+                    cardFront.appendChild(img);
+                } else {
+                    cardFront.textContent = item;
+                }
+                
+                cardInner.appendChild(cardBack);
+                cardInner.appendChild(cardFront);
+                card.appendChild(cardInner);
+                
+                card.addEventListener('click', handleCardClick);
+                // Per accessibilità
+                card.addEventListener('keydown', (e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        handleCardClick({ currentTarget: e.currentTarget });
+                    }
+                });
+
+                gameBoard.appendChild(card);
+            });
+        }
+        
+        /**
+         * Gestisce il click su una carta.
+         * @param {Event} e - L'evento di click.
+         */
+        function handleCardClick(e) {
+            const clickedCard = e.currentTarget;
+
+            // Ignora il click se il tabellone è bloccato, la carta è già girata o trovata
+            if (state.isLocked || clickedCard.classList.contains('is-flipped') || state.flippedCards.length === 2) {
+                return;
+            }
+
+            flipCard(clickedCard);
+            state.flippedCards.push(clickedCard);
+
+            if (state.flippedCards.length === 2) {
+                state.isLocked = true; // Blocca il tabellone
+                checkForMatch();
+            }
+        }
+
+        /**
+         * Gira una carta mostrando la faccia frontale.
+         * @param {HTMLElement} card - L'elemento della carta da girare.
+         */
+        function flipCard(card) {
+            card.classList.add('is-flipped');
+            card.setAttribute('aria-label', `Carta con valore ${card.dataset.value}`);
+        }
+
+        /**
+         * Controlla se le due carte girate sono una coppia.
+         */
+        function checkForMatch() {
+            const [card1, card2] = state.flippedCards;
+            const isMatch = card1.dataset.value === card2.dataset.value;
+
+            if (isMatch) {
+                setTimeout(handleMatch, 500);
+            } else {
+                setTimeout(handleMismatch, 1200);
+            }
+        }
+        
+        /**
+         * Gestisce il caso in cui viene trovata una coppia.
+         */
+        function handleMatch() {
+            const [card1, card2] = state.flippedCards;
+            
+            // Aggiungi la coppia alla collezione del giocatore
+            addCardToPlayerCollection(card1.dataset.value);
+
+            // Applica la classe per l'animazione di scomparsa
+            card1.classList.add('is-matched');
+            card2.classList.add('is-matched');
+            
+            state.score[state.currentPlayer]++;
+            state.pairsFound++;
+            
+            updateScores();
+            
+            // Resetta le carte girate e sblocca il tabellone (il giocatore continua il turno)
+            state.flippedCards = [];
+            state.isLocked = false;
+            
+            if (state.pairsFound === state.totalPairs) {
+                endGame();
+            }
+        }
+        
+        /**
+         * Aggiunge una rappresentazione della carta trovata all'area del giocatore.
+         * @param {string} value - Il valore della carta.
+         */
+        function addCardToPlayerCollection(value) {
+            const collectedContainer = state.currentPlayer === 1 ? collected1El : collected2El;
+            const collectedCard = document.createElement('div');
+            collectedCard.className = 'collected-card';
+            
+            if (CONFIG.imagesMode === 'urls') {
+                const img = document.createElement('img');
+                img.src = value;
+                img.alt = 'Carta collezionata';
+                collectedCard.appendChild(img);
+            } else {
+                collectedCard.textContent = value;
+            }
+            collectedContainer.appendChild(collectedCard);
+        }
+
+        /**
+         * Gestisce il caso in cui le carte non sono una coppia.
+         */
+        function handleMismatch() {
+            const [card1, card2] = state.flippedCards;
+            
+            // Rigira le carte
+            card1.classList.remove('is-flipped');
+            card2.classList.remove('is-flipped');
+            card1.setAttribute('aria-label', 'Carta coperta');
+            card2.setAttribute('aria-label', 'Carta coperta');
+
+            // Resetta e cambia turno
+            state.flippedCards = [];
+            switchTurn();
+            state.isLocked = false; // Sblocca il tabellone
+        }
+
+        /**
+         * Cambia il turno al giocatore successivo.
+         */
+        function switchTurn() {
+            state.currentPlayer = state.currentPlayer === 1 ? 2 : 1;
+            updateTurnIndicator();
+        }
+
+        /**
+         * Aggiorna visivamente il giocatore attivo.
+         */
+        function updateTurnIndicator() {
+            if (state.currentPlayer === 1) {
+                player1Panel.classList.add('active');
+                player2Panel.classList.remove('active');
+            } else {
+                player1Panel.classList.remove('active');
+                player2Panel.classList.add('active');
+            }
+        }
+        
+        /**
+         * Aggiorna i punteggi nell'interfaccia.
+         */
+        function updateScores() {
+            score1El.textContent = state.score[1];
+            score2El.textContent = state.score[2];
+        }
+
+        /**
+         * Termina la partita e mostra il vincitore.
+         */
+        function endGame() {
+            const score1 = state.score[1];
+            const score2 = state.score[2];
+            let message = '';
+
+            if (score1 > score2) {
+                message = 'Vince il Giocatore 1!';
+            } else if (score2 > score1) {
+                message = 'Vince il Giocatore 2!';
+            } else {
+                message = 'È un pareggio!';
+            }
+
+            winnerMessageEl.textContent = message;
+            finalScoresEl.textContent = `Punteggio finale: Giocatore 1 (${score1}) - Giocatore 2 (${score2})`;
+            gameOverModal.classList.add('show');
+        }
+
+
+        /********************************************************************************
+         * EVENT LISTENERS
+        /********************************************************************************/
+        restartBtn.addEventListener('click', initGame);
+        restartModalBtn.addEventListener('click', initGame);
+        pairsSelector.addEventListener('change', initGame);
+
+        // Avvia il gioco al caricamento della pagina
+        document.addEventListener('DOMContentLoaded', initGame);
+    </script>
+</body>
+</html>

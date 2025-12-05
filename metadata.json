@@ -1,0 +1,5 @@
+{
+  "name": "Gioco di Memoria (Memo Baby Animals) 1.2",
+  "description": "Un classico gioco di memoria per due giocatori, implementato in un singolo file HTML con JavaScript vanilla e CSS. I giocatori girano le carte per trovare coppie di animali. Le coppie trovate vengono aggiunte alla collezione del giocatore. Il giocatore con più coppie vince.",
+  "requestFramePermissions": []
+}
