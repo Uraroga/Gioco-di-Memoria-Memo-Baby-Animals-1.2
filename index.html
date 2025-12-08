@@ -18,6 +18,7 @@
             --border-radius: 12px;
             --shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
             --paypal-blue: #0070ba;
+            --lang-btn-bg: #9013fe; /* Colore per il tasto lingua */
         }
 
         *, *::before, *::after {
@@ -50,12 +51,12 @@
         /* Controlli di Gioco */
         .controls {
             background-color: white;
-            padding: 15px 25px;
+            padding: 10px 15px;
             border-radius: var(--border-radius);
             box-shadow: var(--shadow);
             display: flex;
             align-items: center;
-            gap: 15px;
+            gap: 10px;
             margin-bottom: 20px;
             flex-wrap: wrap;
             justify-content: center;
@@ -66,7 +67,7 @@
         }
 
         .controls select, .controls button {
-            padding: 10px 15px;
+            padding: 8px 12px;
             border-radius: 8px;
             border: 1px solid #ccc;
             font-size: 16px;
@@ -91,12 +92,32 @@
             box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
         }
 
+        #lang-btn {
+            background-color: var(--lang-btn-bg);
+            color: white;
+            border: none;
+            font-weight: bold;
+            width: 44px; /* Larghezza fissa compatta */
+            height: 40px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 24px; /* Emoji più grande */
+            padding: 0;
+            line-height: 1;
+        }
+
+        #lang-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+        }
+
         /* Pulsante PayPal */
         .paypal-btn {
             background-color: var(--paypal-blue);
             color: white;
             text-decoration: none;
-            padding: 10px 15px;
+            padding: 8px 12px;
             border-radius: 8px;
             font-size: 16px;
             font-weight: bold;
@@ -350,26 +371,34 @@
             /* Header più compatto */
             .controls {
                 flex-direction: row;
-                flex-wrap: wrap;
-                gap: 8px;
-                padding: 10px;
+                flex-wrap: nowrap; /* Evita il wrap eccessivo */
+                gap: 5px; /* Gap ridotto */
+                padding: 8px;
                 justify-content: space-between;
+                width: 100%;
             }
             .controls label {
-                display: none; /* Nascondi label per risparmiare spazio */
+                display: none; 
             }
             .controls select {
                 font-size: 14px;
                 padding: 6px;
-                flex-grow: 1;
+                width: auto;
+                flex-grow: 1; /* Il select prende lo spazio disponibile */
+                min-width: 80px;
             }
             #restart-btn {
                 font-size: 14px;
-                padding: 6px 10px;
+                padding: 6px 8px;
+            }
+            #lang-btn {
+                width: 36px;
+                height: 36px;
+                font-size: 20px;
             }
             .paypal-btn {
                 font-size: 14px;
-                padding: 6px 10px;
+                padding: 6px 8px;
             }
 
             /* Pannelli Giocatori Super Compatti */
@@ -381,14 +410,14 @@
             .player {
                 width: 50%;
                 max-width: none;
-                padding: 8px; /* Padding minimo */
+                padding: 8px; 
                 display: flex;
                 flex-direction: column;
                 justify-content: flex-start;
-                border-width: 2px; /* Bordo meno spesso */
+                border-width: 2px; 
             }
             .player.active {
-                transform: none; /* Rimuovi scale effect su mobile */
+                transform: none; 
                 box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
             }
             .player h2 {
@@ -432,7 +461,7 @@
 
     <div class="main-container">
         <header class="controls">
-            <label for="pairs-selector">Coppie:</label>
+            <label for="pairs-selector" data-lang="pairsLabel">Coppie:</label>
             <select id="pairs-selector">
                 <option value="4">4 coppie</option>
                 <option value="6">6 coppie</option>
@@ -440,20 +469,21 @@
                 <option value="9">9 coppie</option>
                 <option value="10">10 coppie</option>
             </select>
-            <button id="restart-btn">Ricomincia</button>
+            <button id="restart-btn" data-lang="restart">Ricomincia</button>
+            <button id="lang-btn" title="Change Language">🇬🇧</button>
             <a href="https://paypal.me/uraroga" target="_blank" class="paypal-btn" title="Supporta con PayPal">PayPal</a>
         </header>
 
         <div class="game-layout">
             <aside class="players-info">
                 <div id="player1" class="player">
-                    <h2>Giocatore 1</h2>
-                    <p class="score">Punti: <span id="score1">0</span></p>
+                    <h2 data-lang="player1">Giocatore 1</h2>
+                    <p class="score"><span data-lang="score">Punti:</span> <span id="score1">0</span></p>
                     <div class="collected-cards" id="collected1"></div>
                 </div>
                 <div id="player2" class="player">
-                    <h2>Giocatore 2</h2>
-                    <p class="score">Punti: <span id="score2">0</span></p>
+                    <h2 data-lang="player2">Giocatore 2</h2>
+                    <p class="score"><span data-lang="score">Punti:</span> <span id="score2">0</span></p>
                     <div class="collected-cards" id="collected2"></div>
                 </div>
             </aside>
@@ -465,12 +495,86 @@
         <div class="modal-content">
             <h2 id="winner-message"></h2>
             <p id="final-scores"></p>
-            <button id="restart-modal-btn">Gioca ancora</button>
+            <button id="restart-modal-btn" data-lang="playAgain">Gioca ancora</button>
         </div>
     </div>
 
 
     <script>
+        /********************************************************************************
+         * TRADUZIONI (IT / EN)
+        /********************************************************************************/
+        const TRANSLATIONS = {
+            it: {
+                pageTitle: "Gioco di Memoria",
+                pairsLabel: "Coppie:",
+                pairsOption: "coppie",
+                restart: "Ricomincia",
+                langBtn: "🇬🇧", // Mostra la bandiera della lingua alternativa
+                player1: "Giocatore 1",
+                player2: "Giocatore 2",
+                score: "Punti:",
+                playAgain: "Gioca ancora",
+                winner1: "Vince il Giocatore 1!",
+                winner2: "Vince il Giocatore 2!",
+                draw: "È un pareggio!",
+                finalScorePrefix: "Punteggio finale"
+            },
+            en: {
+                pageTitle: "Memory Game",
+                pairsLabel: "Pairs:",
+                pairsOption: "pairs",
+                restart: "Restart",
+                langBtn: "🇮🇹", // Mostra la bandiera della lingua alternativa
+                player1: "Player 1",
+                player2: "Player 2",
+                score: "Score:",
+                playAgain: "Play Again",
+                winner1: "Player 1 Wins!",
+                winner2: "Player 2 Wins!",
+                draw: "It's a draw!",
+                finalScorePrefix: "Final Score"
+            }
+        };
+
+        let currentLang = 'it'; // Lingua di default
+
+        function toggleLanguage() {
+            currentLang = currentLang === 'it' ? 'en' : 'it';
+            updateLanguage();
+        }
+
+        function updateLanguage() {
+            const t = TRANSLATIONS[currentLang];
+            
+            // Aggiorna Titolo Pagina
+            document.title = t.pageTitle;
+
+            // Aggiorna Elementi con attributo data-lang
+            document.querySelectorAll('[data-lang]').forEach(el => {
+                const key = el.getAttribute('data-lang');
+                if (t[key]) {
+                    el.textContent = t[key];
+                }
+            });
+
+            // Aggiorna Tasto Lingua
+            document.getElementById('lang-btn').textContent = t.langBtn;
+
+            // Aggiorna Opzioni Select (mantieni numero, cambia testo)
+            const options = document.getElementById('pairs-selector').options;
+            for (let i = 0; i < options.length; i++) {
+                const val = options[i].value;
+                options[i].textContent = `${val} ${t.pairsOption}`;
+            }
+
+            // Aggiorna modale se è aperto
+            if (gameOverModal.classList.contains('show')) {
+                // Ricalcola il messaggio finale solo se la partita è finita
+                updateEndGameMessageInModal();
+            }
+        }
+
         /********************************************************************************
          * CONFIGURAZIONE DEL GIOCO
          * 
@@ -483,31 +587,12 @@
 
         /**
          * Per usare immagini personalizzate da URL, modifica l'oggetto CONFIG.
-         * 
-         * 1. Cambia `imagesMode` da "emoji" a "urls".
-         * 2. Popola l'array `images` con i link alle tue immagini.
-         *    L'array deve contenere un numero di URL pari al numero di coppie che vuoi usare.
-         *    Esempio per 4 coppie:
-         *    
-         *    const CONFIG = {
-         *        imagesMode: "urls",
-         *        images: [
-         *            "https://picsum.photos/id/237/100", // Cane
-         *            "https://picsum.photos/id/1025/100", // Altro cane
-         *            "https://picsum.photos/id/1074/100", // Leone
-         *            "https://picsum.photos/id/1084/100"  // Volpe
-         *        ]
-         *    };
          */
         const CONFIG = {
             imagesMode: "emoji", // "emoji" o "urls"
             images: []
         };
         
-        /**
-         * Funzione per impostare programmaticamente le immagini da usare.
-         * @param {string[]} imagesArray - Un array di URL di immagini.
-         */
         function setImages(imagesArray) {
             if (Array.isArray(imagesArray) && imagesArray.length > 0) {
                 CONFIG.imagesMode = "urls";
@@ -517,7 +602,6 @@
                 CONFIG.imagesMode = "emoji";
                 console.log("Array di immagini non valido. Ripristinata modalità 'emoji'.");
             }
-            // Riavvia il gioco per applicare le modifiche
             initGame();
         }
 
@@ -528,6 +612,7 @@
         const pairsSelector = document.getElementById('pairs-selector');
         const restartBtn = document.getElementById('restart-btn');
         const restartModalBtn = document.getElementById('restart-modal-btn');
+        const langBtn = document.getElementById('lang-btn'); // Nuovo
         const score1El = document.getElementById('score1');
         const score2El = document.getElementById('score2');
         const player1Panel = document.getElementById('player1');
@@ -545,7 +630,7 @@
             currentPlayer: 1,
             score: { 1: 0, 2: 0 },
             flippedCards: [],
-            isLocked: false, // Blocca il tabellone durante il controllo delle carte
+            isLocked: false, 
             pairsFound: 0,
             totalPairs: 8,
         };
@@ -575,10 +660,6 @@
             renderBoard(deck);
         }
 
-        /**
-         * Crea il mazzo di carte basandosi sulla configurazione.
-         * @returns {Array<string>} Un array di valori per le carte.
-         */
         function createDeck() {
             let items;
             if (CONFIG.imagesMode === 'urls' && CONFIG.images.length >= state.totalPairs) {
@@ -586,14 +667,9 @@
             } else {
                 items = DEFAULT_EMOJIS.slice(0, state.totalPairs);
             }
-            // Duplica gli elementi per creare le coppie
             return [...items, ...items];
         }
 
-        /**
-         * Mescola un array usando l'algoritmo di Fisher-Yates.
-         * @param {Array} array - L'array da mescolare.
-         */
         function shuffle(array) {
             for (let i = array.length - 1; i > 0; i--) {
                 const j = Math.floor(Math.random() * (i + 1));
@@ -601,9 +677,6 @@
             }
         }
         
-        /**
-         * Imposta il numero di colonne della griglia in base al numero di carte.
-         */
         function setBoardGrid() {
             const numCards = state.totalPairs * 2;
             let cols = 4; // Default
@@ -613,14 +686,10 @@
             else if (numCards <= 18) cols = 6;
             else if (numCards <= 20) cols = 5;
 
-            gameBoard.className = ''; // Rimuove classi precedenti
+            gameBoard.className = ''; 
             gameBoard.classList.add(`cols-${cols}`);
         }
 
-        /**
-         * Renderizza il tabellone di gioco.
-         * @param {Array<string>} deck - Il mazzo di carte mescolato.
-         */
         function renderBoard(deck) {
             gameBoard.innerHTML = '';
             setBoardGrid();
@@ -654,7 +723,6 @@
                 card.appendChild(cardInner);
                 
                 card.addEventListener('click', handleCardClick);
-                // Per accessibilità
                 card.addEventListener('keydown', (e) => {
                     if (e.key === 'Enter' || e.key === ' ') {
                         e.preventDefault();
@@ -666,14 +734,9 @@
             });
         }
         
-        /**
-         * Gestisce il click su una carta.
-         * @param {Event} e - L'evento di click.
-         */
         function handleCardClick(e) {
             const clickedCard = e.currentTarget;
 
-            // Ignora il click se il tabellone è bloccato, la carta è già girata o trovata
             if (state.isLocked || clickedCard.classList.contains('is-flipped') || state.flippedCards.length === 2) {
                 return;
             }
@@ -682,23 +745,16 @@
             state.flippedCards.push(clickedCard);
 
             if (state.flippedCards.length === 2) {
-                state.isLocked = true; // Blocca il tabellone
+                state.isLocked = true; 
                 checkForMatch();
             }
         }
 
-        /**
-         * Gira una carta mostrando la faccia frontale.
-         * @param {HTMLElement} card - L'elemento della carta da girare.
-         */
         function flipCard(card) {
             card.classList.add('is-flipped');
             card.setAttribute('aria-label', `Carta con valore ${card.dataset.value}`);
         }
 
-        /**
-         * Controlla se le due carte girate sono una coppia.
-         */
         function checkForMatch() {
             const [card1, card2] = state.flippedCards;
             const isMatch = card1.dataset.value === card2.dataset.value;
@@ -710,16 +766,11 @@
             }
         }
         
-        /**
-         * Gestisce il caso in cui viene trovata una coppia.
-         */
         function handleMatch() {
             const [card1, card2] = state.flippedCards;
             
-            // Aggiungi la coppia alla collezione del giocatore
             addCardToPlayerCollection(card1.dataset.value);
 
-            // Applica la classe per l'animazione di scomparsa
             card1.classList.add('is-matched');
             card2.classList.add('is-matched');
             
@@ -728,7 +779,6 @@
             
             updateScores();
             
-            // Resetta le carte girate e sblocca il tabellone (il giocatore continua il turno)
             state.flippedCards = [];
             state.isLocked = false;
             
@@ -737,10 +787,6 @@
             }
         }
         
-        /**
-         * Aggiunge una rappresentazione della carta trovata all'area del giocatore.
-         * @param {string} value - Il valore della carta.
-         */
         function addCardToPlayerCollection(value) {
             const collectedContainer = state.currentPlayer === 1 ? collected1El : collected2El;
             const collectedCard = document.createElement('div');
@@ -757,35 +803,24 @@
             collectedContainer.appendChild(collectedCard);
         }
 
-        /**
-         * Gestisce il caso in cui le carte non sono una coppia.
-         */
         function handleMismatch() {
             const [card1, card2] = state.flippedCards;
             
-            // Rigira le carte
             card1.classList.remove('is-flipped');
             card2.classList.remove('is-flipped');
             card1.setAttribute('aria-label', 'Carta coperta');
             card2.setAttribute('aria-label', 'Carta coperta');
 
-            // Resetta e cambia turno
             state.flippedCards = [];
             switchTurn();
-            state.isLocked = false; // Sblocca il tabellone
+            state.isLocked = false; 
         }
 
-        /**
-         * Cambia il turno al giocatore successivo.
-         */
         function switchTurn() {
             state.currentPlayer = state.currentPlayer === 1 ? 2 : 1;
             updateTurnIndicator();
         }
 
-        /**
-         * Aggiorna visivamente il giocatore attivo.
-         */
         function updateTurnIndicator() {
             if (state.currentPlayer === 1) {
                 player1Panel.classList.add('active');
@@ -796,33 +831,33 @@
             }
         }
         
-        /**
-         * Aggiorna i punteggi nell'interfaccia.
-         */
         function updateScores() {
             score1El.textContent = state.score[1];
             score2El.textContent = state.score[2];
         }
 
-        /**
-         * Termina la partita e mostra il vincitore.
-         */
         function endGame() {
+            updateEndGameMessageInModal();
+            gameOverModal.classList.add('show');
+        }
+
+        // Funzione helper per aggiornare il testo del modale (usata sia in endGame che al cambio lingua)
+        function updateEndGameMessageInModal() {
             const score1 = state.score[1];
             const score2 = state.score[2];
+            const t = TRANSLATIONS[currentLang];
             let message = '';
 
             if (score1 > score2) {
-                message = 'Vince il Giocatore 1!';
+                message = t.winner1;
             } else if (score2 > score1) {
-                message = 'Vince il Giocatore 2!';
+                message = t.winner2;
             } else {
-                message = 'È un pareggio!';
+                message = t.draw;
             }
 
             winnerMessageEl.textContent = message;
-            finalScoresEl.textContent = `Punteggio finale: Giocatore 1 (${score1}) - Giocatore 2 (${score2})`;
-            gameOverModal.classList.add('show');
+            finalScoresEl.textContent = `${t.finalScorePrefix}: ${t.player1} (${score1}) - ${t.player2} (${score2})`;
         }
 
 
@@ -832,6 +867,7 @@
         restartBtn.addEventListener('click', initGame);
         restartModalBtn.addEventListener('click', initGame);
         pairsSelector.addEventListener('change', initGame);
+        langBtn.addEventListener('click', toggleLanguage); // Evento cambio lingua
 
         // Avvia il gioco al caricamento della pagina
         document.addEventListener('DOMContentLoaded', initGame);
